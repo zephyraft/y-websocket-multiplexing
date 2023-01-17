@@ -1,9 +1,9 @@
 {
   "name": "y-websocket-multiplexing",
-  "version": "1.4.5-alpha.2",
+  "version": "1.4.5-alpha.4",
   "description": "Websockets provider for Yjs",
   "main": "./dist/y-websocket.cjs",
-  "module": "./src/y-websocket.ts",
+  "module": "./dist/y-websocket.mjs",
   "types": "./dist/src/y-websocket.d.ts",
   "sideEffects": false,
   "scripts": {
@@ -27,8 +27,8 @@
     "./bin/utils": "./bin/utils.js",
     "./bin/callback": "./bin/callback.js",
     ".": {
-      "module": "./src/y-websocket.ts",
-      "import": "./src/y-websocket.ts",
+      "module": "./dist/y-websocket.mjs",
+      "import": "./dist/y-websocket.mjs",
       "require": "./dist/y-websocket.cjs"
     }
   },
