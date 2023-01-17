@@ -1,5 +1,7 @@
+import typescript from '@rollup/plugin-typescript'
+
 export default {
-  input: './src/y-websocket.js',
+  input: './src/y-websocket.ts',
   external: id => /^(lib0|yjs|y-protocols)/.test(id),
   output: [{
     name: 'y-websocket',
@@ -14,5 +16,6 @@ export default {
       }
       return path
     }
-  }]
+  }],
+  plugins: [typescript()]
 }
