@@ -1,15 +1,11 @@
 {
-  "name": "y-websocket",
+  "name": "y-websocket-multiplexing",
   "version": "1.4.5",
   "description": "Websockets provider for Yjs",
   "main": "./dist/y-websocket.cjs",
   "module": "./src/y-websocket.js",
   "types": "./dist/src/y-websocket.d.ts",
   "sideEffects": false,
-  "funding": {
-    "type": "GitHub Sponsors ❤",
-    "url": "https://github.com/sponsors/dmonad"
-  },
   "scripts": {
     "start": "node ./bin/server.js",
     "dist": "rm -rf dist && rollup -c && tsc",
@@ -38,17 +34,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yjs/y-websocket.git"
+    "url": "git+https://github.com/zephyraft/y-websocket-multiplexing.git"
   },
   "keywords": [
     "Yjs"
   ],
-  "author": "Kevin Jahns <kevin.jahns@protonmail.com>",
+  "author": "Zephyraft <zzzzzzzephyr@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yjs/y-websocket/issues"
+    "url": "https://github.com/zephyraft/y-websocket-multiplexing/issues"
   },
-  "homepage": "https://github.com/yjs/y-websocket#readme",
+  "homepage": "https://github.com/zephyraft/y-websocket-multiplexing#readme",
   "standard": {
     "ignore": [
       "/dist",
