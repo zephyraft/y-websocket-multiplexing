@@ -64,6 +64,7 @@ messageHandlers[messageSubDocSync] = (
     const subDocID = decoding.readVarString(decoder);
     encoding.writeVarUint(encoder, messageSync);
     const subDoc = provider.getSubDoc(subDocID);
+    // console.log('messageSubDocSync', subDocID, subDoc);
     if (subDoc) {
         const syncMessageType = syncProtocol.readSyncMessage(
             decoder,
@@ -71,6 +72,25 @@ messageHandlers[messageSubDocSync] = (
             subDoc,
             provider,
         );
+        // console.log(
+        //     `syncMessageType=${syncMessageType}, encoderLength=${encoding.length(
+        //         encoder,
+        //     )}`,
+        // );
+        // 收到messageYjsSyncStep1时，回复messageYjsSyncStep2
+        if (syncMessageType === syncProtocol.messageYjsSyncStep1) {
+            // broadcast local state
+            const encoderState = encoding.createEncoder();
+            encoding.writeVarUint(encoderState, messageSubDocSync);
+            encoding.writeVarString(encoderState, subDoc.guid);
+            syncProtocol.writeSyncStep2(encoderState, subDoc);
+            bc.publish(
+                provider.bcChannel,
+                encoding.toUint8Array(encoderState),
+                this,
+            );
+        }
+
         if (
             emitSynced &&
             syncMessageType === syncProtocol.messageYjsSyncStep2
@@ -228,13 +248,14 @@ const setupWS = (provider: WebsocketProvider) => {
             }
             // Start with no reconnect timeout and increase timeout by
             // using exponential backoff starting with 100ms
-            setTimeout(function () {
-                setupWS(provider);
-                provider.connectBc();
-            }, math.min(
-                math.pow(2, provider.wsUnsuccessfulReconnects) * 100,
-                provider.maxBackoffTime,
-            ));
+            setTimeout(
+                setupWS,
+                math.min(
+                    math.pow(2, provider.wsUnsuccessfulReconnects) * 100,
+                    provider.maxBackoffTime,
+                ),
+                provider,
+            );
         };
         websocket.onopen = () => {
             provider.wsLastMessageReceived = time.getUnixTime();
@@ -514,7 +535,6 @@ export class WebsocketProvider extends Observable<string> {
         interval: number,
     ) => {
         const ws = this.ws;
-        // console.log("_waitForConnection", ws?.readyState);
         if (ws && ws.readyState === 1) {
             callback();
         } else {
@@ -608,12 +628,24 @@ export class WebsocketProvider extends Observable<string> {
                 syncProtocol.writeSyncStep1(encoder, subdoc);
                 if (this.ws) {
                     this._dirtyRetrySend(encoding.toUint8Array(encoder), () => {
-                        console.log('registry _getSubDocUpdateHandler');
                         subdoc.on(
                             'update',
                             this._getSubDocUpdateHandler(subdoc.guid),
                         );
                     });
+                }
+
+                if (this.bcconnected) {
+                    // bc启用时，广播sync step 1
+                    subdoc.on(
+                        'update',
+                        this._getSubDocUpdateHandler(subdoc.guid),
+                    );
+                    bc.publish(
+                        this.bcChannel,
+                        encoding.toUint8Array(encoder),
+                        this,
+                    );
                 }
             });
         });
@@ -706,34 +738,6 @@ export class WebsocketProvider extends Observable<string> {
             encoding.toUint8Array(encoderAwarenessState),
             this,
         );
-
-        // sync subdoc
-        console.log('this.subdocs', this.subdocs);
-        this.subdocs.forEach((subdoc) => {
-            // subdoc.off("update", this._getSubDocUpdateHandler(subdoc.guid));
-            subdoc.on('update', this._getSubDocUpdateHandler(subdoc.guid));
-            // send sync step1 to bc
-            // write sync step 1
-            const encoderSync = encoding.createEncoder();
-            encoding.writeVarUint(encoderSync, messageSubDocSync);
-            encoding.writeVarString(encoderSync, subdoc.guid);
-            syncProtocol.writeSyncStep1(encoderSync, subdoc);
-            bc.publish(
-                this.bcChannel,
-                encoding.toUint8Array(encoderSync),
-                this,
-            );
-            // broadcast local state
-            const encoderState = encoding.createEncoder();
-            encoding.writeVarUint(encoderState, messageSubDocSync);
-            encoding.writeVarString(encoderState, subdoc.guid);
-            syncProtocol.writeSyncStep2(encoderState, subdoc);
-            bc.publish(
-                this.bcChannel,
-                encoding.toUint8Array(encoderState),
-                this,
-            );
-        });
     }
 
     disconnectBc() {
