@@ -636,7 +636,8 @@ export class WebsocketProvider extends Observable<string> {
                 }
 
                 if (this.bcconnected) {
-                    // bc启用时，广播sync step 1
+                    // 参考connectBc函数逻辑，bc启用时，广播step1和step2
+                    // send sync step 1
                     subdoc.on(
                         'update',
                         this._getSubDocUpdateHandler(subdoc.guid),
@@ -644,6 +645,16 @@ export class WebsocketProvider extends Observable<string> {
                     bc.publish(
                         this.bcChannel,
                         encoding.toUint8Array(encoder),
+                        this,
+                    );
+                    // broadcast local state
+                    const encoderState = encoding.createEncoder();
+                    encoding.writeVarUint(encoderState, messageSubDocSync);
+                    encoding.writeVarString(encoderState, subdoc.guid);
+                    syncProtocol.writeSyncStep2(encoderState, this.doc);
+                    bc.publish(
+                        this.bcChannel,
+                        encoding.toUint8Array(encoderState),
                         this,
                     );
                 }
