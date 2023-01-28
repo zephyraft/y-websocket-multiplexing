@@ -636,8 +636,7 @@ export class WebsocketProvider extends Observable<string> {
                 }
 
                 if (this.bcconnected) {
-                    // 参考connectBc函数逻辑，bc启用时，广播step1和step2
-                    // send sync step 1
+                    // bc启用时，广播sync step 1
                     subdoc.on(
                         'update',
                         this._getSubDocUpdateHandler(subdoc.guid),
